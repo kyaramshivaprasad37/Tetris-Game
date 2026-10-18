@@ -59,8 +59,14 @@ void Gameloop() {
 
         if(Board[objectY +1][objectX] == 0) {
             if(ch == KEY_DOWN) {
+                int tempY = heightW - 2;
+
+                while (Board[tempY][objectX] != 0 && tempY >= 0) {
+                    tempY--;
+                }
+
                 if(objectY < heightW-2) {
-                    objectY = heightW-2;
+                    objectY = tempY;
                 }
             }else if(ch == KEY_LEFT) {
                 if(objectX > 1 && objectY != heightW -2) {
