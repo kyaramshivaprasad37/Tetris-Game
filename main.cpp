@@ -43,7 +43,7 @@ void handleInput(int ch) {
 void update() {
     fallCounter++;
     if(fallCounter >= fallSpeed) {
-        if(objectY < heightW-2) {
+        if(objectY < heightW-2 && Board[objectY+1][objectX] != 1) {
             objectY++;
         }
         fallCounter = 0;
