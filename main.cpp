@@ -177,7 +177,7 @@ bool canPieceFit(int objectX, int objectY) {
             {
                 checkX = objectX + c;
                 checkY = objectY + r;
-                if(checkX < 2 || checkX > widthW -2 || checkY > heightW - 2 || Board[checkY][checkX] == 1)
+                if(checkX < 1 || checkX > widthW -2 || checkY > heightW - 2 || Board[checkY][checkX] == 1)
                 {
                     return false;
                 }
@@ -192,21 +192,11 @@ void handleInput(int ch) {
         is_running = false;
     }
 
-    if(ch == KEY_DOWN) {
-        if(Board[objectY + 1][objectX] == 0) {
-            int tempY = heightW - 2;
-
-            while (Board[tempY][objectX] != 0 && tempY >= 0) {
-                tempY--;
-            }
-
-            if(objectY < heightW-2) {
-                objectY = tempY;
-            }
-        }
-    }else if(ch == KEY_LEFT && (canPieceFit(objectX, objectY))) {
+    if(ch == KEY_DOWN && canPieceFit(objectX, objectY)) {
+            objectY++;
+    }else if(ch == KEY_LEFT && canPieceFit(objectX-1, objectY)) {
             objectX--;
-    }else if(ch == KEY_RIGHT && (canPieceFit(objectX, objectY))) {
+    }else if(ch == KEY_RIGHT && canPieceFit(objectX+1, objectY)) {
         objectX++;
     }else if(ch == KEY_UP){
         rotationIndex = (rotationIndex + 1) % 4;
@@ -214,6 +204,7 @@ void handleInput(int ch) {
 }
 
 void update() {
+    //gravity
     fallCounter++;
     if(fallCounter >= fallSpeed) {
         if(objectY < heightW-2 && Board[objectY+1][objectX] != 1) {
@@ -222,16 +213,23 @@ void update() {
         fallCounter = 0;
     }
 
-    if(objectY + 4 >= heightW - 2) {
-        for(int r = 0; r < 4; r++) {
-            for(int c = 0; c < 4;c++) {
-                if(Pieces[PieceNo][rotationIndex][r][c] == 1) {
-                    Board[objectY + r][objectX + c] = 1;
+    // checking collision and coping into board
+    for(int r = 0; r < 4; r++) {
+        for (int c = 0;c < 4;c++) {
+            if(!(canPieceFit(objectX, objectY + 1)))
+            {
+                for(int r = 0; r < 4; r++) {
+                    for(int c = 0; c < 4; c++) {
+                        if(Pieces[PieceNo][rotationIndex][r][c] == 1) {
+                            Board[objectY + r][objectX + c] = 1;
+                        }
+                    }
                 }
+                objectX = 1;
+                objectY = 1;
+                PieceNo = (PieceNo + 1) % 6;
             }
         }
-        objectX = 1;
-        objectY = 1;
     }
 }
 
@@ -254,7 +252,7 @@ void render(WINDOW* win) {
     for(int r = 0; r <= heightW-2;r++) {
         for(int c = 0; c <= widthW - 2;c++) {
             if(Board[r][c] != 0) {
-                draw(win);
+                mvwaddch(win, r,c,object);
             }
         }
     }
@@ -272,7 +270,6 @@ void Gameloop(WINDOW* win) {
         render(win);
         napms(20);
     }
-
 }
 
 int main() {
