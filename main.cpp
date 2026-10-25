@@ -1,4 +1,6 @@
+#include <iostream>
 #include <ncurses.h>
+#include <random>
 
 #define heightW 22
 #define widthW 22
@@ -9,6 +11,11 @@ int objectY = 1;
 
 int Board[widthW][heightW] = {0};
 
+std::mt19937 gen(std::random_device{}());
+std::uniform_int_distribution<int> pieceDist(0, 6);
+
+int score = 0;
+
 bool is_running = true;
 int fallCounter = 0;
 int fallSpeed = 20;
@@ -16,7 +23,7 @@ int fallSpeed = 20;
 WINDOW* win = nullptr;
 
 int rotationIndex = 0;
-int PieceNo = 0;
+int PieceNo = 0;//pieceDist(gen);
 
 int Pieces[7][4][4][4] = {
     // I = 0
@@ -192,7 +199,7 @@ void handleInput(int ch) {
         is_running = false;
     }
 
-    if(ch == KEY_DOWN && canPieceFit(objectX, objectY)) {
+    if(ch == KEY_DOWN && canPieceFit(objectX, objectY + 1)) {
             objectY++;
     }else if(ch == KEY_LEFT && canPieceFit(objectX-1, objectY)) {
             objectX--;
@@ -203,32 +210,51 @@ void handleInput(int ch) {
     }
 }
 
+void dropDownPieces(int row) {
+    for(int r = row; r >= 2; r--) {
+        for(int c = 1; c <= widthW - 2; c++) {
+            Board[r][c] = Board[r-1][c];
+        }
+    }
+}
+
 void update() {
     //gravity
     fallCounter++;
     if(fallCounter >= fallSpeed) {
-        if(objectY < heightW-2 && Board[objectY+1][objectX] != 1) {
+        if(canPieceFit(objectX, objectY + 1)) {
             objectY++;
         }
         fallCounter = 0;
     }
 
     // checking collision and coping into board
-    for(int r = 0; r < 4; r++) {
-        for (int c = 0;c < 4;c++) {
-            if(!(canPieceFit(objectX, objectY + 1)))
-            {
-                for(int r = 0; r < 4; r++) {
-                    for(int c = 0; c < 4; c++) {
-                        if(Pieces[PieceNo][rotationIndex][r][c] == 1) {
-                            Board[objectY + r][objectX + c] = 1;
-                        }
-                    }
+    if(!(canPieceFit(objectX, objectY + 1)))
+    {
+        for(int r = 0; r < 4; r++) {
+            for(int c = 0; c < 4; c++) {
+                if(Pieces[PieceNo][rotationIndex][r][c] == 1) {
+                    Board[objectY + r][objectX + c] = 1;
                 }
-                objectX = 1;
-                objectY = 1;
-                PieceNo = (PieceNo + 1) % 6;
             }
+        }
+        objectX = 1;
+        objectY = 1;
+        //PieceNo = pieceDist(gen);
+        rotationIndex = 0;
+    }
+
+    // checking row is full
+    for(int r = heightW - 2; r >= 1; r--) {
+        bool isFilled = true;
+        for(int c = 1; c <= widthW -2; c++) {
+            if(Board[r][c] == 0) {
+                isFilled = false;
+            }
+        }
+        if(isFilled) {
+            score += 100;
+            dropDownPieces(r);
         }
     }
 }
@@ -293,4 +319,6 @@ int main() {
 
     delwin(win);
     endwin();
+
+    std::cout << "YOUR SCORE IS: " << score << '\n';
 }
