@@ -15,15 +15,18 @@ std::mt19937 gen(std::random_device{}());
 std::uniform_int_distribution<int> pieceDist(0, 6);
 
 int score = 0;
+int linesCleared = 1;
+int lines = 0;
 
 bool is_running = true;
 int fallCounter = 0;
 int fallSpeed = 20;
 
 WINDOW* win = nullptr;
+WINDOW* scoreBoard = nullptr;
 
 int rotationIndex = 0;
-int PieceNo = 0;//pieceDist(gen);
+int PieceNo = pieceDist(gen);
 
 int Pieces[7][4][4][4] = {
     // I = 0
@@ -208,6 +211,10 @@ void handleInput(int ch) {
     }else if(ch == KEY_UP){
         rotationIndex = (rotationIndex + 1) % 4;
     }
+
+    if(Board[1][1] == 1) {
+        is_running = false;
+    }
 }
 
 void dropDownPieces(int row) {
@@ -240,7 +247,7 @@ void update() {
         }
         objectX = 1;
         objectY = 1;
-        //PieceNo = pieceDist(gen);
+        PieceNo = pieceDist(gen);
         rotationIndex = 0;
     }
 
@@ -254,8 +261,15 @@ void update() {
         }
         if(isFilled) {
             score += 100;
+            linesCleared += 1;
+            lines++;
             dropDownPieces(r);
         }
+    }
+
+    if(linesCleared % 3 == 0 && fallSpeed >= 5) {
+        fallSpeed -= 5;
+        linesCleared = 1;
     }
 }
 
@@ -270,9 +284,11 @@ void draw(WINDOW* win) {
     }
 }
 
-void render(WINDOW* win) {
+void render(WINDOW* win, WINDOW* scoreBoard) {
     werase(win);
+    werase(scoreBoard);
     box(win, '#', '#');
+    box(scoreBoard, '#', '#');
 
     // redrawing the old pieces before new ones
     for(int r = 0; r <= heightW-2;r++) {
@@ -282,18 +298,20 @@ void render(WINDOW* win) {
             }
         }
     }
-
+    mvwprintw(scoreBoard, 2, 4, "SCORE: %d", score);
+    mvwprintw(scoreBoard, 4, 4, "Lines Cleared: %d", lines);
     draw(win);      // drawing current pieces
     wrefresh(win);
+    wrefresh(scoreBoard);
 }
 
-void Gameloop(WINDOW* win) {
+void Gameloop(WINDOW* win, WINDOW* scoreBoard) {
     while(is_running) {
         int ch = wgetch(win);
 
         handleInput(ch);
         update();
-        render(win);
+        render(win, scoreBoard);
         napms(20);
     }
 }
@@ -308,17 +326,20 @@ int main() {
     int startX = 0;
 
     WINDOW* win = newwin(heightW, widthW, startY, startX);
+    WINDOW* scoreBoard = newwin(8, 25, 0, 25);
     refresh();
     box(win, '#', '#');
+    box(scoreBoard, '#', '#');
     wrefresh(win);
+    wrefresh(scoreBoard);
 
     keypad(win, true);
     nodelay(win, true);
 
-    Gameloop(win);
+    Gameloop(win, scoreBoard);
 
     delwin(win);
+    delwin(scoreBoard);
     endwin();
-
-    std::cout << "YOUR SCORE IS: " << score << '\n';
+    std::cout << "GAME OVER\nYOUR SCORE: " << score << '\n';
 }
