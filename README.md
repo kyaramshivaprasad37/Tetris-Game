@@ -70,6 +70,3 @@
     - [ ] Persistent high-score saving to disk.
 
     ---
-
-    ## 👤 Author
-    Developed by **Shivaprasad**
